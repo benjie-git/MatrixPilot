@@ -339,11 +339,11 @@ static void startS(void)
 
 static void calibrateS(void)
 {
-#if (NORADIO == 1)
+//#if (NORADIO == 1)
 	if (1)
-#else
-	if (udb_flags._.radio_on)
-#endif
+//#else
+//	if (udb_flags._.radio_on)
+//#endif
 	{
 		udb_led_toggle(LED_RED);
 		calib_timer--;
@@ -482,26 +482,27 @@ static void manualS(void)
 
 static void stabilizedS(void)
 {
-	if (udb_flags._.radio_on)
-	{
-#ifdef CATAPULT_LAUNCH_ENABLE
-		if (launch_enabled() & flight_mode_switch_waypoints() & dcm_flags._.nav_capable)
-			ent_cat_armedS();
-		else
-#endif
-		if (flight_mode_switch_waypoints() & dcm_flags._.nav_capable)
-			ent_waypointS();
-		else if (flight_mode_switch_manual())
-			ent_manualS();
-	}
-	else
-	{
-		if (dcm_flags._.nav_capable)
-		{
-			DPRINT("stabilizedS() calling ent_returnS()\r\n");
-			ent_returnS();
-		}
-	}
+    return;
+//	if (udb_flags._.radio_on)
+//	{
+//#ifdef CATAPULT_LAUNCH_ENABLE
+//		if (launch_enabled() & flight_mode_switch_waypoints() & dcm_flags._.nav_capable)
+//			ent_cat_armedS();
+//		else
+//#endif
+//		if (flight_mode_switch_waypoints() & dcm_flags._.nav_capable)
+//			ent_waypointS();
+//		else if (flight_mode_switch_manual())
+//			ent_manualS();
+//	}
+//	else
+//	{
+//		if (dcm_flags._.nav_capable)
+//		{
+//			DPRINT("stabilizedS() calling ent_returnS()\r\n");
+//			ent_returnS();
+//		}
+//	}
 }
 
 static void waypointS(void)

@@ -48,10 +48,10 @@ void udb_background_callback_triggered(void);
 int main(void)
 {
 	mcu_init();
-	IOTest();
+//	IOTest();
 	udb_init();
 #if (BOARD_TYPE != AUAV3_BOARD) // NOTE: this is already done in udb_init() above
-	udb_eeprom_init();  // using legacy eeprom driver
+//	udb_eeprom_init();  // using legacy eeprom driver
 #endif
 	DPRINT("MatrixPilot LedTest\r\n");
 	while (1)
@@ -153,20 +153,20 @@ void udb_heartbeat_40hz_callback(void)
 
 void udb_background_callback_triggered(void)
 {
-#if (BOARD_TYPE != AUAV3_BOARD)
-	// Write 1,2,3,4 into the first 4 bytes of the EEPROM
-	unsigned char data[4] = {1, 2, 3, 4};
-	eeprom_PageWrite(0x0000, data, 4);
-
-	// Read the first 4 bytes of the EEPROM
-	data[0] = data[1] = data[2] = data[3] = 0;
-	eeprom_SequentialRead(0x0000, data, 4);
-
-	// Then test them
-	if (data[0] == 1 && data[1] == 2 && data[2] == 3 && data[3] == 4) {
-		eepromSuccess = 1;
-	}
-#endif
+//#if (BOARD_TYPE != AUAV3_BOARD)
+//	// Write 1,2,3,4 into the first 4 bytes of the EEPROM
+//	unsigned char data[4] = {1, 2, 3, 4};
+//	eeprom_PageWrite(0x0000, data, 4);
+//
+//	// Read the first 4 bytes of the EEPROM
+//	data[0] = data[1] = data[2] = data[3] = 0;
+//	eeprom_SequentialRead(0x0000, data, 4);
+//
+//	// Then test them
+//	if (data[0] == 1 && data[1] == 2 && data[2] == 3 && data[3] == 4) {
+//		eepromSuccess = 1;
+//	}
+//#endif
 }
 
 // Called at 40 Hz, before reseting the sensor sampling
@@ -192,15 +192,15 @@ void udb_heartbeat_callback(void)
 		udb_pwOut[Y_ACCEL_OUTPUT_CHANNEL] = 3000;
 		udb_pwOut[Z_ACCEL_OUTPUT_CHANNEL] = 3000;
 	} else if (eepromSuccess == 0 && eepromFailureFlashCount) {
-		// eeprom failure!
-		DPRINT("eeprom failure!\r\n");
-		if (udb_heartbeat_counter % 6 == 0) {
-			udb_led_toggle(LED_RED);
-			udb_led_toggle(LED_GREEN);
-			udb_led_toggle(LED_BLUE);
-			udb_led_toggle(LED_ORANGE);
-			eepromFailureFlashCount--;
-		}
+//		// eeprom failure!
+//		DPRINT("eeprom failure!\r\n");
+//		if (udb_heartbeat_counter % 6 == 0) {
+//			udb_led_toggle(LED_RED);
+//			udb_led_toggle(LED_GREEN);
+//			udb_led_toggle(LED_BLUE);
+//			udb_led_toggle(LED_ORANGE);
+//			eepromFailureFlashCount--;
+//		}
 	} else {
 		union longww accum;
 

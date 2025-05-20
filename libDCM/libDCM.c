@@ -57,14 +57,10 @@ void dcm_init(void)
 
 extern inline void read_accel(void) ;
 
-void dcm_align_tilt(void)
+
+void dcm_update_startup_tilt(void)
 {
-	uint16_t minMag;
     uint16_t maxMag;
-    uint16_t most_level_axis;
-	int16_t temporary[3] ;
-	read_accel() ;
-	vector3_normalize( &rmat[6] , gplane ) ;
     
     // Find the axis with the strongest gravity at startup ( and whether it is positive or negative)
     // Can be used to signal to use one of 6 flight plans by holding the plane in a give orientation on power up.
@@ -90,7 +86,19 @@ void dcm_align_tilt(void)
             gravity_axis_at_startup = GRAVITY_Z_POSITIVE;
         else
             gravity_axis_at_startup = GRAVITY_Z_NEGATIVE;
-    }
+    }    
+}
+
+
+void dcm_align_tilt(void)
+{
+	uint16_t minMag;
+    uint16_t most_level_axis;
+	int16_t temporary[3] ;
+	read_accel() ;
+	vector3_normalize( &rmat[6] , gplane ) ;
+    
+    dcm_update_startup_tilt();
 
     // Work out which IMU axis is the most level with the earth axis
     // Used for the initialisation of the rmat matrix

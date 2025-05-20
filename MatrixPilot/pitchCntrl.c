@@ -93,8 +93,9 @@ static void normalPitchCntrl(void)
 
 	if (settings._.PitchStabilization && state_flags._.pitch_feedback)
 	{
+        int32_t fwd = __builtin_mulsu(desiredRotationRateRadians[0], pitchfdfwd>>2);
 		pitchAccum.WW = __builtin_mulsu(tiltError[0], pitchgain) 
-		              - __builtin_mulsu(desiredRotationRateRadians[0], pitchfdfwd)
+		              - ((fwd < 0) ? fwd : 0)
 		              + __builtin_mulsu(rotationRateError[0], pitchkd );
 		pitch_control = (int32_t)pitchAccum._.W1 + (int32_t) elevatorLoadingTrim;
 	}

@@ -52,7 +52,7 @@
 // ORIENTATION_ROLLCW180: board rolled 90 degrees clockwise,
 //        from point of view of the pilot, then rotate the board 180 around the Z axis of the plane,
 //        so that the GPS connector points toward the tail of the plane
-#define BOARD_ORIENTATION                   ORIENTATION_FORWARDS
+#define BOARD_ORIENTATION                   ORIENTATION_BACKWARDS
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -92,13 +92,13 @@
 #define ROLL_STABILIZATION_AILERONS         1
 #define ROLL_STABILIZATION_RUDDER           0
 #define PITCH_STABILIZATION                 1
-#define YAW_STABILIZATION_RUDDER            1
+#define YAW_STABILIZATION_RUDDER            0
 #define YAW_STABILIZATION_AILERON           0
 
 // Aileron and Rudder Navigation
 // Set either of these to 1 to enable helical turn control for navigation.
 #define AILERON_NAVIGATION                  1
-#define RUDDER_NAVIGATION                   1
+#define RUDDER_NAVIGATION                   0
 
 // Cross track margin, in meters
 // This is used when the cross track option is attached to a waypoint
@@ -182,7 +182,7 @@
 // recommended that you actually use this option, since you'd have no manual control to fall
 // back on if things go wrong.  It may not even be legal in your area.
 #ifndef NORADIO
-#define NORADIO                             1
+#define NORADIO                             0
 #endif
 
 
@@ -202,7 +202,7 @@
 // PPM_NUMBER_OF_CHANNELS is the number of channels sent on the PWM signal.  This is
 // often different from the NUM_INPUTS value below, and should usually be left at 8.
 //
-#define USE_PPM_INPUT                       0
+#define USE_PPM_INPUT                       1
 #define PPM_NUMBER_OF_CHANNELS              8
 #define PPM_SIGNAL_INVERTED                 0
 #define PPM_ALT_OUTPUT_PINS                 0
@@ -218,35 +218,35 @@
 // If using PWM inputs (parallel Rx connections), set to the number of cables connected, 1-8
 // If using PPM inputs (serial Rx connection), set to the number of Rx channels, up to PPM_NUMBER_OF_CHANNELS
 // If using LRS library (integrated SPI tranceiver), set to the number of Rx channels, up to 16
-#define NUM_INPUTS                          3
+#define NUM_INPUTS                          8
 
 // Channel numbers for each input.
 // Use as is, or edit to match your setup.
 //   - If you're set up to use Rudder Navigation (like MatrixNav), then you may want to swap
 //     the aileron and rudder channels so that rudder is CHANNEL_1, and aileron is 5.
-#define THROTTLE_INPUT_CHANNEL              CHANNEL_1
+#define THROTTLE_INPUT_CHANNEL              CHANNEL_4
 #define AILERON_INPUT_CHANNEL               CHANNEL_2
 #define ELEVATOR_INPUT_CHANNEL              CHANNEL_3
 #define RUDDER_INPUT_CHANNEL                CHANNEL_UNUSED
-#define MODE_SWITCH_INPUT_CHANNEL           CHANNEL_UNUSED
+#define MODE_SWITCH_INPUT_CHANNEL           CHANNEL_5
 #define BRAKE_THR_SEL_INPUT_CHANNEL         CHANNEL_UNUSED
-#define BRAKE_INPUT_CHANNEL                 CHANNEL_UNUSED
+#define BRAKE_INPUT_CHANNEL                 CHANNEL_1
 #define FLAPS_INPUT_CHANNEL                 CHANNEL_UNUSED
 #define CAMERA_PITCH_INPUT_CHANNEL          CHANNEL_UNUSED
 #define CAMERA_YAW_INPUT_CHANNEL            CHANNEL_UNUSED
 #define CAMERA_MODE_INPUT_CHANNEL           CHANNEL_UNUSED
 #define OSD_MODE_SWITCH_INPUT_CHANNEL       CHANNEL_UNUSED
-#define RSSI_INPUT_CHANNEL                  CHANNEL_UNUSED
+#define RSSI_INPUT_CHANNEL                  CHANNEL_8
 #define MODE_INVERTED_CHANNEL               CHANNEL_UNUSED
-#define PASSTHROUGH_A_INPUT_CHANNEL         CHANNEL_UNUSED
+#define PASSTHROUGH_A_INPUT_CHANNEL         CHANNEL_6
 #define PASSTHROUGH_B_INPUT_CHANNEL         CHANNEL_UNUSED
 #define PASSTHROUGH_C_INPUT_CHANNEL         CHANNEL_UNUSED
 #define PASSTHROUGH_D_INPUT_CHANNEL         CHANNEL_UNUSED
 
-#define FIXED_TRIMPOINT     1
+#define FIXED_TRIMPOINT     0
 #define THROTTLE_TRIMPOINT  0
 #define AILERON_TRIMPOINT   3000
-#define ELEVATOR_TRIMPOINT  2900
+#define ELEVATOR_TRIMPOINT  3000
 #define CHANNEL_TRIMPOINT   3000
 
 // NUM_OUTPUTS:
@@ -269,8 +269,8 @@
 //
 #define THROTTLE_OUTPUT_CHANNEL             CHANNEL_UNUSED
 #define AILERON_OUTPUT_CHANNEL              CHANNEL_1
-#define AILERON_SECONDARY_OUTPUT_CHANNEL    CHANNEL_2
-#define ELEVATOR_OUTPUT_CHANNEL             CHANNEL_3
+#define AILERON_SECONDARY_OUTPUT_CHANNEL    CHANNEL_3
+#define ELEVATOR_OUTPUT_CHANNEL             CHANNEL_2
 #define RUDDER_OUTPUT_CHANNEL               CHANNEL_UNUSED
 #define AILERON_LEFT_OUTPUT_CHANNEL         CHANNEL_UNUSED
 #define FLAP_LEFT_OUTPUT_CHANNEL            CHANNEL_UNUSED
@@ -297,7 +297,7 @@
 // For any of these that are set to 1, that servo will be sent reversed controls.
 // Note that your servo reversing settings here should match what you set on your transmitter.
 #define AILERON_CHANNEL_REVERSED            0
-#define ELEVATOR_CHANNEL_REVERSED           1
+#define ELEVATOR_CHANNEL_REVERSED           0
 #define RUDDER_CHANNEL_REVERSED             0
 #define AILERON_SECONDARY_CHANNEL_REVERSED  0
 #define THROTTLE_CHANNEL_REVERSED           0
@@ -384,14 +384,14 @@
 // Note that SERIAL_MAVLINK defaults to using a baud rate of 57600 baud (other formats default to 19200)
 
 #ifndef SERIAL_OUTPUT_FORMAT
-#define SERIAL_OUTPUT_FORMAT                SERIAL_DEBUG
+#define SERIAL_OUTPUT_FORMAT                SERIAL_MAVLINK
 #endif
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // Serial Output BAUD rate for either standard telemetry streams or MAVLink
 //  19200, 38400, 57600, 115200, 230400, 460800, 921600 // yes, it really will work at this rate
-#define SERIAL_BAUDRATE                     57600
+#define SERIAL_BAUDRATE                     115200
 
 
 // NUM_ANALOG_INPUTS:
@@ -519,7 +519,7 @@
 // They are specified in terms of the maximum desired turning rate in degrees per second in each mode.
 // The largest possible value is 240 degrees per second, anything larger will be clipped to 240.
 #define TURN_RATE_NAV                       30.0
-#define TURN_RATE_FBW                       60.0
+#define TURN_RATE_FBW                      180.0
 
 // Aileron/Roll Control Gains
 // ROLLKP is the proportional gain, approximately 0.25
@@ -528,18 +528,18 @@
 // use it only if there is no rudder.
 // YAWKD_AILERON is the derivative feedback gain for ailerons in response to yaw rotation.
 // use it only if there is no rudder.
-#define ROLLKP                              0.20
-#define ROLLKD                              0.05
+#define ROLLKP                              0.13
+#define ROLLKD                              0.01
 #define YAWKP_AILERON                       0.00
-#define YAWKD_AILERON                       0.00
+#define YAWKD_AILERON                       0.05
 
 // Elevator/Pitch Control Gains
 // PITCHGAIN is the pitch stabilization gain, typically around 0.125
 // PITCHKD feedback gain for pitch damping, around 0.0625
 // ELEVATOR_BOOST is the additional gain multiplier for the manually commanded elevator deflection
-#define PITCHGAIN                           0.30
-#define PITCHKD                             0.00
-#define ELEVATOR_BOOST                      0.50
+#define PITCHGAIN                           0.35
+#define PITCHKD                             0.04
+#define ELEVATOR_BOOST                      0.40
 
 // Parameters below are used in the computation of angle of attack and pitch trim.
 // ( INVERTED_NEUTRAL_PITCH is no longer used and should not be used.) -- Note (RobD) yes it is?
@@ -567,13 +567,16 @@
 // Uncomment the line below to activate the CUSTOM_OFFSETS feature in MatrixPilot.
 
 #define CUSTOM_OFFSETS
-// The Following are for the UDB5mini in Solius measured Friday 14th August 2018
-#define XACCEL_OFFSET  (66)  // adjusted for 16g ( 242) //( 166) //( 154 )
-#define YACCEL_OFFSET  (9)   // adjusted for 16g ( -10) //(  66) //(  86 )
-#define ZACCEL_OFFSET  (-202) // adjusted for 16g (-788) //(-803) //(-777 )
-#define XRATE_OFFSET   (-33) // adjusted for 2000 deg / sec(-123) //(-119) //(-121 )  
-#define YRATE_OFFSET   (3)   // adjusted for 2000 deg / sec(  16) //(  15) //(  18 ) 
-#define ZRATE_OFFSET   (-8)  // adjusted for 2000 deg / sec( -28) //( -34) //( -28 ) 
+// 396	-92	-908	-202	-7	-102
+// 99	-23	-227	-51 	-2	-26 // >>2 to adjust for higher max rates
+// 101	73	-40	-37	-39	-19
+
+#define XACCEL_OFFSET  (101)
+#define YACCEL_OFFSET  (73)
+#define ZACCEL_OFFSET  (-40)
+#define XRATE_OFFSET   (-37)
+#define YRATE_OFFSET   (-39)
+#define ZRATE_OFFSET   (-19)
 
 // Rudder/Yaw Control Gains
 // YAWKP_RUDDER is the proportional feedback gain for rudder control of yaw orientation.

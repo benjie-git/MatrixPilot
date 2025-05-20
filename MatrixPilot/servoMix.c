@@ -164,13 +164,19 @@ void servoMix(void)
 		pwManual[ELEVATOR_INPUT_CHANNEL] += ((pwManual[ELEVATOR_INPUT_CHANNEL] - udb_pwTrim[ELEVATOR_INPUT_CHANNEL]) * elevatorbgain) >> 3;
 		pwManual[RUDDER_INPUT_CHANNEL] += ((pwManual[RUDDER_INPUT_CHANNEL] - udb_pwTrim[RUDDER_INPUT_CHANNEL]) * rudderbgain) >> 3;
 	}
-	temp = pwManual[AILERON_INPUT_CHANNEL] + REVERSE_IF_NEEDED(AILERON_CHANNEL_REVERSED, roll_control + waggle);
+    
+    int32_t brakeVal = pwManual[BRAKE_INPUT_CHANNEL] - 3000;
+    
+	temp = pwManual[AILERON_INPUT_CHANNEL] + REVERSE_IF_NEEDED(AILERON_CHANNEL_REVERSED, roll_control + (int32_t)waggle + glider_roll_control + brakeVal);
 	udb_pwOut[AILERON_OUTPUT_CHANNEL] = udb_servo_pulsesat(temp);
-		
-	udb_pwOut[AILERON_SECONDARY_OUTPUT_CHANNEL] = udb_pwTrim[AILERON_INPUT_CHANNEL] +
-	    REVERSE_IF_NEEDED(AILERON_SECONDARY_CHANNEL_REVERSED, udb_pwOut[AILERON_OUTPUT_CHANNEL] - udb_pwTrim[AILERON_INPUT_CHANNEL]);
+	
+	temp = pwManual[AILERON_INPUT_CHANNEL] + REVERSE_IF_NEEDED(AILERON_SECONDARY_CHANNEL_REVERSED, roll_control + (int32_t)waggle + glider_roll_control - brakeVal);
+	udb_pwOut[AILERON_SECONDARY_OUTPUT_CHANNEL] = udb_servo_pulsesat(temp);
 
-	temp = pwManual[ELEVATOR_INPUT_CHANNEL] + REVERSE_IF_NEEDED(ELEVATOR_CHANNEL_REVERSED, pitch_control);
+//	udb_pwOut[AILERON_SECONDARY_OUTPUT_CHANNEL] = udb_pwTrim[AILERON_INPUT_CHANNEL] +
+//	    REVERSE_IF_NEEDED(AILERON_SECONDARY_CHANNEL_REVERSED, (int32_t)udb_pwOut[AILERON_OUTPUT_CHANNEL] - (int32_t)udb_pwTrim[AILERON_INPUT_CHANNEL] - 2*brakeVal);
+
+	temp = pwManual[ELEVATOR_INPUT_CHANNEL] + REVERSE_IF_NEEDED(ELEVATOR_CHANNEL_REVERSED, pitch_control + glider_pitch_control);
 	udb_pwOut[ELEVATOR_OUTPUT_CHANNEL] = udb_servo_pulsesat(temp);
 
 	temp = pwManual[RUDDER_INPUT_CHANNEL] + REVERSE_IF_NEEDED(RUDDER_CHANNEL_REVERSED, yaw_control - waggle);

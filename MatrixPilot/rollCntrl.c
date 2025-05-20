@@ -92,7 +92,7 @@ void normalRollCntrl(void)
 	{
 		gyroRollFeedback.WW = - __builtin_mulus(rollkd, rotationRateError[1]);
 		rollAccum.WW -= __builtin_mulsu(tiltError[1], rollkp);
-		rollAccum.WW += __builtin_mulsu(desiredRotationRateRadians[1], rollkpfdfwd);
+		rollAccum.WW += __builtin_mulsu(desiredRotationRateRadians[1], rollkpfdfwd<<1);
 	}
 	else
 	{

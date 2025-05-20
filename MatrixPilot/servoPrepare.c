@@ -47,6 +47,9 @@ int16_t yaw_control;
 int16_t throttle_control;
 uint16_t wind_gain;
 
+int16_t glider_pitch_control = 0;
+int16_t glider_roll_control = 0;
+
 void servoPrepare_init(void) // initialize the PWM
 {
 	int16_t i;

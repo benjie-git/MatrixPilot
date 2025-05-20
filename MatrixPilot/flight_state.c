@@ -24,6 +24,7 @@
 #include "../libDCM/gpsParseCommon.h"
 #include "../libDCM/rmat.h"
 #include "../libDCM/libDCM.h"
+#include "servoPrepare.h"
 
 
 #define MIN_THROTTLE        2240
@@ -32,17 +33,13 @@
 
 enum PLANE_FLIGHT_MODE
 {
+	PLANE_INIT,
 	PLANE_ON_GROUND,
-    PLANE_LAUNCHED,
 	PLANE_IN_FLIGHT,
-    PLANE_TURN_1,
-    PLANE_CRUISE_1,
-    PLANE_CRUISE_2,
-    PLANE_DESCENDING, 
 	PLANE_LANDED
 };
 
-static int16_t flight_mode = PLANE_ON_GROUND;
+static int16_t flight_mode = PLANE_INIT;
 static int16_t state_counter = 0;
 static int16_t home_saved = false;
 static int32_t last_lat = 0;
@@ -150,74 +147,126 @@ void flight_state_8hz(void)
 	++state_counter;
 }
 
+struct gliderInstructionDef {
+	int16_t elevatorOffset;
+	int16_t aileronOffset;
+	int16_t timerCount; // in 40ths of a second
+};
 
+#define SECONDS(x)  ((int16_t)(40 * x))
+
+static struct gliderInstructionDef gliderFlightPlanStraight[] = 
+{
+    { 700,    0, SECONDS( 0.8)},  // Climb
+    { 300,    0, SECONDS( 0.3)},  // Finish Climb
+    { 100,    0, SECONDS( 0.5)},  // Finish Climb
+    {   0,    0, SECONDS( 0.0 )}, // Cruise
+};
+
+static struct gliderInstructionDef gliderFlightPlanDown[] = 
+{
+    { 550,    0, SECONDS( 0.8)},  // Climb
+    { 300,    0, SECONDS( 0.4)},  // Finish Climb
+    { 100,    0, SECONDS( 0.6)},  // Finish Climb
+    {   0,    0, SECONDS( 0.0 )}, // Cruise
+};
+
+static struct gliderInstructionDef gliderFlightPlanUp[] = 
+{
+    { 820,    0, SECONDS( 0.8)},  // Climb
+    { 300,    0, SECONDS( 0.3)},  // Finish Climb
+    { 100,    0, SECONDS( 0.3)},  // Finish Climb
+    {   0,    0, SECONDS( 0.0 )}, // Cruise
+};
+
+static struct gliderInstructionDef gliderFlightPlanLeft[] = 
+{
+    { 200,    0, SECONDS( 0.6)},  // Climb
+    {   0,    0, SECONDS( 0.0 )}, // Cruise
+};
+
+static struct gliderInstructionDef gliderFlightPlanRight[] = 
+{
+    { 200,    0, SECONDS( 0.6)},  // Climb
+    {   0,    0, SECONDS( 0.0 )}, // Cruise
+};
+
+static struct gliderInstructionDef *gliderFlightPlan = NULL;
+
+
+static int16_t step_number = 0;
+static int16_t step_counter = 0;
+static int16_t num_steps = 0;
+
+void startGliderStep(int16_t stepNum)
+{
+    if (stepNum < num_steps) {
+        struct gliderInstructionDef step = gliderFlightPlan[stepNum];
+        step_number = stepNum;
+        step_counter = step.timerCount;
+        glider_pitch_control = step.elevatorOffset;
+        glider_roll_control = step.aileronOffset;
+    }
+    else {
+        led_off(LED_GREEN);
+    }
+}
+
+// Called at 40Hz
 void flightState(void)
 {
-#define FLIGHT_CLIMB_TIMER           40  // 1 second  
-#define FLIGHT_CRUISE_TIME_1         40
-#define FLIGHT_TURN_TIMER           160 
-#define FLIGHT_DESCEND_TIMER        800  // 20 seconds
-    
-#define FLIGHT_CLIMB_TRIM_DELTA     100
-#define FLIGHT_TURN_RATE_UDB_UNITS 1000  
-#define FLIGHT_DESCEND_TRIM_DELTA   100
-    
-static int16_t climb_timer = 0;
-static int16_t turn_timer = 0;
-static int16_t cruise_timer_1 = 0;
-static int16_t cruise_timer_2 = 0;
-    
-    if (flight_mode == PLANE_ON_GROUND)
+    if (flight_mode == PLANE_INIT)
     {
-       if ((gravity_axis_at_startup == GRAVITY_X_POSITIVE) ||
-            (gravity_axis_at_startup == GRAVITY_X_NEGATIVE))
-        {
-            led_on(LED_GREEN);
-            if (return_accel_vector_plane_xy() > GRAVITY / 2)
-            {
-                flight_mode = PLANE_LAUNCHED ;
-                udb_pwTrim[ELEVATOR_INPUT_CHANNEL] -= FLIGHT_CLIMB_TRIM_DELTA;
-            }
+        if (gravity_axis_at_startup == GRAVITY_X_NEGATIVE) {
+            gliderFlightPlan = gliderFlightPlanRight;
+            num_steps = sizeof(gliderFlightPlanRight) / sizeof(struct gliderInstructionDef);
         }
+        else if (gravity_axis_at_startup == GRAVITY_X_POSITIVE) {
+            gliderFlightPlan = gliderFlightPlanLeft;
+            num_steps = sizeof(gliderFlightPlanLeft) / sizeof(struct gliderInstructionDef);
+        }
+        else if (gravity_axis_at_startup == GRAVITY_Y_NEGATIVE) {
+            gliderFlightPlan = gliderFlightPlanUp;
+            num_steps = sizeof(gliderFlightPlanUp) / sizeof(struct gliderInstructionDef);
+        }
+        else if (gravity_axis_at_startup == GRAVITY_Y_POSITIVE) {
+            gliderFlightPlan = gliderFlightPlanDown;
+            num_steps = sizeof(gliderFlightPlanDown) / sizeof(struct gliderInstructionDef);
+        }
+        else {
+            gliderFlightPlan = gliderFlightPlanStraight;
+            num_steps = sizeof(gliderFlightPlanStraight) / sizeof(struct gliderInstructionDef);
+        }
+        startGliderStep(0);
+        flight_mode = PLANE_ON_GROUND;
     }
-    if ( flight_mode == PLANE_LAUNCHED )
+    else if (flight_mode == PLANE_ON_GROUND)
     {
-        if (climb_timer++ > FLIGHT_CLIMB_TIMER)
+        led_on(LED_GREEN);
+        if (return_accel_vector_plane_xy() > GRAVITY)
         {
-            udb_pwTrim[ELEVATOR_INPUT_CHANNEL] = ELEVATOR_TRIMPOINT;
             flight_mode = PLANE_IN_FLIGHT;
         }
     }
-    if ( flight_mode == PLANE_IN_FLIGHT)
+    else if (flight_mode == PLANE_IN_FLIGHT)
     {
-        if (cruise_timer_1++ > FLIGHT_CRUISE_TIME_1)
+        if ( step_number < num_steps)
         {
-            if (gravity_axis_at_startup == GRAVITY_X_POSITIVE)
+            if (step_counter-- == 0)
             {
-                udb_pwIn[AILERON_INPUT_CHANNEL] -= FLIGHT_TURN_RATE_UDB_UNITS;
+                startGliderStep(step_number + 1);
             }
-            else
-            {
-                udb_pwIn[AILERON_INPUT_CHANNEL] += FLIGHT_TURN_RATE_UDB_UNITS;
-            }
-            flight_mode = PLANE_TURN_1;
         }
-    }
-    if ( flight_mode == PLANE_TURN_1)
-    {
-         if ( turn_timer++ > FLIGHT_TURN_TIMER)
-         {
-             udb_pwIn[AILERON_INPUT_CHANNEL] = AILERON_TRIMPOINT ;
-             flight_mode = PLANE_CRUISE_2 ;
-         }
-    }
-    if (flight_mode == PLANE_CRUISE_2)
-    {
-        if ( cruise_timer_2++ > FLIGHT_DESCEND_TIMER)
-         {
-             udb_pwTrim[ELEVATOR_INPUT_CHANNEL] += FLIGHT_DESCEND_TRIM_DELTA ;
-             udb_pwIn[AILERON_INPUT_CHANNEL] += FLIGHT_TURN_RATE_UDB_UNITS;
-             flight_mode = PLANE_DESCENDING ;
-         }
+        if ( udb_pwIn[PASSTHROUGH_A_INPUT_CHANNEL] > 3500 )
+        {
+//    		asm("reset");
+            step_number = 0;
+            step_counter = 0;
+            glider_pitch_control = 0;
+            glider_roll_control = 0;
+    		flight_mode = PLANE_INIT;
+            dcm_update_startup_tilt();
+
+        }
     }
 }
