@@ -26,6 +26,20 @@
 #include "../libUDB/libUDB.h"
 #include "libDCM_defines.h"
 
+enum {
+    IMU_AXIS_X,
+    IMU_AXIS_Y,
+    IMU_AXIS_Z
+};
+
+enum {
+    GRAVITY_X_POSITIVE,
+    GRAVITY_X_NEGATIVE,
+    GRAVITY_Y_POSITIVE,
+    GRAVITY_Y_NEGATIVE,
+    GRAVITY_Z_POSITIVE,
+    GRAVITY_Z_NEGATIVE     
+};
 ////////////////////////////////////////////////////////////////////////////////
 // libDCM.h defines the API for accessing the location and orientation
 // information from the DCM algorithm and GPS.
@@ -57,13 +71,20 @@ struct relative3D_32 dcm_absolute_to_relative_32(struct waypoint3D absolute);
 
 vect3_32t dcm_rel2abs(vect3_32t rel);
 
+extern    uint16_t gravity_axis_at_startup;
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Vars
 extern union dcm_fbts_word { struct dcm_flag_bits _; int16_t W; } dcm_flags;
 
 // Calibrate for 10 seconds before moving servos
-#define DCM_CALIB_COUNT  400    // 10 seconds at 40 Hz
+#ifdef CUSTOM_OFFSETS 
+#define DCM_CALIB_COUNT  5   // PDH: with UDB5s Onlyt wait 0.125 seconds with custom offsets set.
+#else
+#define DCM_CALIB_COUNT  400   // //10 seconds at 40 Hz
+#endif
+
 #define DCM_GPS_COUNT    1000   // 25 seconds at 40 Hz
 
 #endif // LIB_DCM_H

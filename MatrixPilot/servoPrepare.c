@@ -33,6 +33,7 @@
 #include "flightplan_waypoints.h"
 #include "airspeedCntrl.h"
 #include "cameraCntrl.h"
+#include "flightState.h"
 #include "../libUDB/heartbeat.h"
 #include "../libUDB/servoOut.h"
 #include "../libUDB/osd.h"
@@ -58,7 +59,14 @@ void servoPrepare_init(void) // initialize the PWM
 	for (i = 0; i <= NUM_INPUTS; i++)
 	{
 #if (FIXED_TRIMPOINT == 1)
-		udb_pwTrim[i] = udb_pwIn[i] = ((i == THROTTLE_INPUT_CHANNEL) ? THROTTLE_TRIMPOINT : CHANNEL_TRIMPOINT);
+        if (i == THROTTLE_OUTPUT_CHANNEL)
+				udb_pwTrim[i] = udb_pwIn[i] = THROTTLE_TRIMPOINT;
+        if (i == AILERON_INPUT_CHANNEL)
+                udb_pwTrim[i] = udb_pwIn[i] = AILERON_TRIMPOINT;
+        if (i == ELEVATOR_INPUT_CHANNEL)
+                udb_pwTrim[i] = udb_pwIn[i] = ELEVATOR_TRIMPOINT;
+        else
+				udb_pwTrim[i] = udb_pwIn[i] = CHANNEL_TRIMPOINT;
 #else
 		udb_pwIn[i] = udb_pwTrim[i] = ((i == THROTTLE_INPUT_CHANNEL) ? 0 : 3000);
 #endif
@@ -68,7 +76,14 @@ void servoPrepare_init(void) // initialize the PWM
 	{
 #if (THROTTLE_INPUT_CHANNEL != 0 )
 #if (FIXED_TRIMPOINT == 1)
-		udb_pwOut[i] = ((i == THROTTLE_OUTPUT_CHANNEL) ? THROTTLE_TRIMPOINT : CHANNEL_TRIMPOINT);
+        if (i == THROTTLE_OUTPUT_CHANNEL)
+				udb_pwOut[i] = THROTTLE_TRIMPOINT;
+        if (i == AILERON_INPUT_CHANNEL)
+                udb_pwOut[i] = AILERON_TRIMPOINT;
+        if (i == ELEVATOR_INPUT_CHANNEL)
+                udb_pwOut[i] = ELEVATOR_TRIMPOINT;
+        else
+				udb_pwOut[i] = CHANNEL_TRIMPOINT;
 #else
 		// initialise the throttle channel to zero, all others to servo midpoint
 		udb_pwOut[i] = ((i == THROTTLE_OUTPUT_CHANNEL) ? 0 : 3000);
@@ -93,6 +108,7 @@ static void flight_controller(void)
 #if (ALTITUDE_GAINS_VARIABLE == 1)
         airspeedCntrl();
 #endif // ALTITUDE_GAINS_VARIABLE
+        flightState();
 		updateBehavior();
 		wind_gain = wind_gain_adjustment();
 		helicalTurnCntrl();
@@ -138,10 +154,10 @@ void dcm_heartbeat_callback(void)
 #endif // (USE_MAVLINK == 1)
 #if (SERIAL_OUTPUT_FORMAT != SERIAL_NONE)
 		// Send telemetry updates at 8hz
-		if (udb_pulse_counter % (HEARTBEAT_HZ/8) == 0)
+		if (udb_pulse_counter % (HEARTBEAT_HZ/40) == 0)
 		{
 // RobD			flight_state_8hz();
-			telemetry_output_8hz();
+			telemetry_output_40hz();
 		}
 #endif // (SERIAL_OUTPUT_FORMAT != SERIAL_NONE)
 	}

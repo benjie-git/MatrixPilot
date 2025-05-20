@@ -485,20 +485,33 @@ void telemetry_restart(void)
 
 #if (SERIAL_OUTPUT_FORMAT == SERIAL_DEBUG)
 
-void telemetry_output_8hz(void)
+void telemetry_output_40hz(void)
 {
-	serial_output("lat: %li, long: %li, alt: %li\r\nrmat: %i, %i, %i, %i, %i, %i, %i, %i, %i\r\n",
-	    lat_gps.WW, lon_gps.WW, alt_sl_gps.WW,
-	    rmat[0], rmat[1], rmat[2],
-	    rmat[3], rmat[4], rmat[5],
-	    rmat[6], rmat[7], rmat[8]);
+	
+//    #define RMAX15 24576 
+//    fractional rmat[3];
+//    fractional rbuff[]= {16300,0,0};
+//    fractional norm;
+//    fractional renorm;
+//    
+//    // rescale row1
+//	norm = VectorPower(3, &rbuff[0]); // Scalegain of 0.5
+//    serial_output("norm %i",norm);
+//	renorm = RMAX15 - norm;
+//    serial_output("renorm %i",renorm);
+//	VectorScale(3, &rbuff[0], &rbuff[0], renorm);
+//    serial_output("rbuff[0] %i",rbuff[0]);
+//	VectorAdd(3, &rmat[0], &rbuff[0], &rbuff[0]);
+//    serial_output("rmat[0] %i\r\n",rmat[0]);
+    //serial_output("%d,%d,%d,%d,%d,%d\r\n",aero_force[0], aero_force[1], aero_force[2],omegagyro[0],omegagyro[1],omegagyro[2]);
+    serial_output("%d,%d,%d,%d,%d,%d\r\n",aero_force[0], aero_force[1], aero_force[2],omegaAccum[0],omegaAccum[1],omegaAccum[2]);
 }
 
 #elif (SERIAL_OUTPUT_FORMAT == SERIAL_ARDUSTATION)
 
 extern int16_t desiredHeight;
 
-void telemetry_output_8hz(void)
+void telemetry_output_40hz(void)
 {
 	uint16_t mode;
 	struct relative2D matrix_accum;
@@ -571,7 +584,7 @@ void telemetry_output_8hz(void)
 
 #elif (SERIAL_OUTPUT_FORMAT == SERIAL_UDB_EXTRA)
 
-void telemetry_output_8hz(void)
+void telemetry_output_40hz(void)
 {
 	int16_t i;
 	static int toggle = 0;
@@ -660,6 +673,10 @@ void telemetry_output_8hz(void)
 			serial_output("F8:H_MAX=%6.1f:H_MIN=%6.1f:MIN_THR=%3.2f:MAX_THR=%3.2f:PITCH_MIN_THR=%4.1f:PITCH_MAX_THR=%4.1f:PITCH_ZERO_THR=%4.1f:\r\n",
 			    altit.HeightTargetMax, altit.HeightTargetMin, altit.AltHoldThrottleMin, altit.AltHoldThrottleMax,
 			    altit.AltHoldPitchMin, altit.AltHoldPitchMax, altit.AltHoldPitchHigh);
+#if (GPS_TYPE == GPS_NONE)
+            setup_origin(); // Require an origin for flight analyzer (flan.pyw). Use FIXED_ORIGIN_LOCATION in options.h
+            state_flags._.f13_print_req = 1;
+#endif
 			break;
 		default:
 		{
@@ -706,9 +723,13 @@ void telemetry_output_8hz(void)
 #endif // MAG_YAW_DRIFT
 				    svs, hdop);
 
-					// Approximate time passing between each telemetry line, even though
-					// we may not have new GPS time data each time through.
-					if (tow.WW > 0) tow.WW += 250; 
+					// GPS is the primary source of telemetry time.  But if no GPS time received, the following lines will
+                    // increment the time until the GPS time comes back online.
+#if (GPS_TYPE == GPS_NONE)
+                    tow.WW += 250; // Allows Flight Analyzer to create CSV files from telemetry when no GPS used.
+#else
+                    if (tow.WW > 0) tow.WW += 250; // With GPS, do not increment telemetry time after boot up, until GPS reading arrives.
+#endif					
 
 					// Save  pwIn and PwOut buffers for printing next time around
 					for (i = 0; i <= NUM_INPUTS; i++)
@@ -800,7 +821,7 @@ void telemetry_output_8hz(void)
 
 #warning SERIAL_OSD_REMZIBI undergoing merge to trunk
 
-void telemetry_output_8hz(void)
+void telemetry_output_40hz(void)
 {
 	// TODO: Output interesting information for OSD.
 	// But first we'll have to implement a buffer for passthrough characters to avoid
@@ -833,7 +854,7 @@ void telemetry_output_8hz(void)
 }
  */
 
-void telemetry_output_8hz(void)
+void telemetry_output_40hz(void)
 {
 	if (udb_pulse_counter % (HEARTBEAT_HZ / 4) == 0) 
 	{
@@ -874,7 +895,7 @@ static int16_t mag_z_axis_min = 0;
 static boolean first_time_through = true;
 
 
-void telemetry_output_8hz(void)
+void telemetry_output_40hz(void)
 {
 	if (udb_pulse_counter % (HEARTBEAT_HZ / 4) == 0) 
 	{
@@ -913,7 +934,7 @@ void telemetry_output_8hz(void)
 
 #elif (SERIAL_OUTPUT_FORMAT == SERIAL_CAM_TRACK)
 
-void telemetry_output_8hz(void)
+void telemetry_output_40hz(void)
 {
 	uint8_t checksum = 0;
 	checksum += ((union intbb)(IMUlocationx._.W1))._.B0 + ((union intbb)(IMUlocationx._.W1))._.B1;
@@ -937,7 +958,7 @@ void telemetry_output_8hz(void)
 #else //((SERIAL_OUTPUT_FORMAT != SERIAL_NONE) && (SERIAL_OUTPUT_FORMAT != SERIAL_MAVLINK))
 
 #if (USE_OSD != OSD_MINIM) && (USE_OSD != OSD_REMZIBI)
-void telemetry_output_8hz(void)
+void telemetry_output_40hz(void)
 {
 }
 #endif // USE_OSD
@@ -968,7 +989,7 @@ void udb_serial_callback_received_byte(uint8_t rxchar)
 void telemetry_restart(void)
 {
 }
-void telemetry_output_8hz(void)
+void telemetry_output_40hz(void)
 {
 }
 void telemetry_init(void)

@@ -34,6 +34,7 @@
 
 union dcm_fbts_word dcm_flags;
 int16_t angleOfAttack;
+uint16_t gravity_axis_at_startup;
 
 void send_HILSIM_outputs(void);
 
@@ -54,6 +55,97 @@ void dcm_init(void)
 	dcm_init_rmat();
 }
 
+extern inline void read_accel(void) ;
+
+void dcm_align_tilt(void)
+{
+	uint16_t minMag;
+    uint16_t maxMag;
+    uint16_t most_level_axis;
+	int16_t temporary[3] ;
+	read_accel() ;
+	vector3_normalize( &rmat[6] , gplane ) ;
+    
+    // Find the axis with the strongest gravity at startup ( and whether it is positive or negative)
+    // Can be used to signal to use one of 6 flight plans by holding the plane in a give orientation on power up.
+    maxMag = abs(rmat[6]);
+    if (rmat[6] > 0)
+        gravity_axis_at_startup = GRAVITY_X_POSITIVE;
+    else
+        gravity_axis_at_startup = GRAVITY_X_NEGATIVE;
+
+    if (abs(rmat[7]) > maxMag)
+    {
+        maxMag = abs(rmat[7]);
+        if (rmat[7] > 0)
+            gravity_axis_at_startup = GRAVITY_Y_POSITIVE;
+        else
+            gravity_axis_at_startup = GRAVITY_Y_NEGATIVE;
+    }
+    
+	if (abs(rmat[8]) > maxMag)
+    {
+        maxMag = abs(rmat[8]);
+        if (rmat[8] > 0)
+            gravity_axis_at_startup = GRAVITY_Z_POSITIVE;
+        else
+            gravity_axis_at_startup = GRAVITY_Z_NEGATIVE;
+    }
+
+    // Work out which IMU axis is the most level with the earth axis
+    // Used for the initialisation of the rmat matrix
+	temporary[0] = gplane[0] ;
+	temporary[1] = gplane[1] ;
+	temporary[2] = gplane[2] ;
+    
+	minMag = abs( rmat[6] ) ;
+	if ( abs( rmat[7] ) < minMag )
+	{
+		minMag = abs( rmat[7] ) ;
+		most_level_axis = IMU_AXIS_Y ;
+	}
+	if ( abs( rmat[8] ) < minMag )
+	{
+		minMag = abs( rmat[8] ) ;
+		most_level_axis = IMU_AXIS_Z;
+	}
+    else 
+    {
+        most_level_axis = IMU_AXIS_X;
+    }
+
+	if ( most_level_axis == IMU_AXIS_X )
+	{
+		temporary[0] = temporary[1] ;
+		temporary[1] = - temporary[2] ;
+		temporary[2] = temporary[0] ;
+		temporary[0] = 0 ;
+	}
+	else if ( most_level_axis == IMU_AXIS_Y)
+	{
+		temporary[1] = temporary[2] ;
+		temporary[2] = - temporary[0] ;
+		temporary[0] = temporary[1] ;
+		temporary[1] = 0 ;
+	}
+	else
+	{
+		temporary[2] = temporary[0] ;
+		temporary[0] = - temporary[1] ;
+		temporary[1] = temporary[2] ;
+		temporary[2] = 0 ;
+	}
+
+	vector3_normalize( temporary , temporary ) ;
+	rmat[3] = temporary[0] ;
+	rmat[4] = temporary[1] ;
+	rmat[5] = temporary[2] ;
+
+	VectorCross( &rmat[0] , &rmat[3] , &rmat[6] ) ;
+    
+}
+
+
 #if (DCM_CALIB_COUNT > DCM_GPS_COUNT)
 #error here
 #endif
@@ -65,6 +157,7 @@ void dcm_run_calib_step(uint16_t count)
 		DPRINT("calib_finished\r\n");
 		dcm_flags._.calib_finished = 1;
 		dcm_calibrate();    // Finish calibration
+        dcm_align_tilt();
 	}
 }
 

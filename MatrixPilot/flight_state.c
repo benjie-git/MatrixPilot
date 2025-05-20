@@ -22,6 +22,8 @@
 #include "defines.h"
 #include "../libDCM/gpsData.h"
 #include "../libDCM/gpsParseCommon.h"
+#include "../libDCM/rmat.h"
+#include "../libDCM/libDCM.h"
 
 
 #define MIN_THROTTLE        2240
@@ -31,7 +33,12 @@
 enum PLANE_FLIGHT_MODE
 {
 	PLANE_ON_GROUND,
+    PLANE_LAUNCHED,
 	PLANE_IN_FLIGHT,
+    PLANE_TURN_1,
+    PLANE_CRUISE_1,
+    PLANE_CRUISE_2,
+    PLANE_DESCENDING, 
 	PLANE_LANDED
 };
 
@@ -141,4 +148,76 @@ void flight_state_8hz(void)
 	}
 
 	++state_counter;
+}
+
+
+void flightState(void)
+{
+#define FLIGHT_CLIMB_TIMER           40  // 1 second  
+#define FLIGHT_CRUISE_TIME_1         40
+#define FLIGHT_TURN_TIMER           160 
+#define FLIGHT_DESCEND_TIMER        800  // 20 seconds
+    
+#define FLIGHT_CLIMB_TRIM_DELTA     100
+#define FLIGHT_TURN_RATE_UDB_UNITS 1000  
+#define FLIGHT_DESCEND_TRIM_DELTA   100
+    
+static int16_t climb_timer = 0;
+static int16_t turn_timer = 0;
+static int16_t cruise_timer_1 = 0;
+static int16_t cruise_timer_2 = 0;
+    
+    if (flight_mode == PLANE_ON_GROUND)
+    {
+       if ((gravity_axis_at_startup == GRAVITY_X_POSITIVE) ||
+            (gravity_axis_at_startup == GRAVITY_X_NEGATIVE))
+        {
+            led_on(LED_GREEN);
+            if (return_accel_vector_plane_xy() > GRAVITY / 2)
+            {
+                flight_mode = PLANE_LAUNCHED ;
+                udb_pwTrim[ELEVATOR_INPUT_CHANNEL] -= FLIGHT_CLIMB_TRIM_DELTA;
+            }
+        }
+    }
+    if ( flight_mode == PLANE_LAUNCHED )
+    {
+        if (climb_timer++ > FLIGHT_CLIMB_TIMER)
+        {
+            udb_pwTrim[ELEVATOR_INPUT_CHANNEL] = ELEVATOR_TRIMPOINT;
+            flight_mode = PLANE_IN_FLIGHT;
+        }
+    }
+    if ( flight_mode == PLANE_IN_FLIGHT)
+    {
+        if (cruise_timer_1++ > FLIGHT_CRUISE_TIME_1)
+        {
+            if (gravity_axis_at_startup == GRAVITY_X_POSITIVE)
+            {
+                udb_pwIn[AILERON_INPUT_CHANNEL] -= FLIGHT_TURN_RATE_UDB_UNITS;
+            }
+            else
+            {
+                udb_pwIn[AILERON_INPUT_CHANNEL] += FLIGHT_TURN_RATE_UDB_UNITS;
+            }
+            flight_mode = PLANE_TURN_1;
+        }
+    }
+    if ( flight_mode == PLANE_TURN_1)
+    {
+         if ( turn_timer++ > FLIGHT_TURN_TIMER)
+         {
+             udb_pwIn[AILERON_INPUT_CHANNEL] = AILERON_TRIMPOINT ;
+             flight_mode = PLANE_CRUISE_2 ;
+         }
+    }
+    if (flight_mode == PLANE_CRUISE_2)
+    {
+        if ( cruise_timer_2++ > FLIGHT_DESCEND_TIMER)
+         {
+             udb_pwTrim[ELEVATOR_INPUT_CHANNEL] += FLIGHT_DESCEND_TRIM_DELTA ;
+             udb_pwIn[AILERON_INPUT_CHANNEL] += FLIGHT_TURN_RATE_UDB_UNITS;
+             flight_mode = PLANE_DESCENDING ;
+         }
+    }
 }

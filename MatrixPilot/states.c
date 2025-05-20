@@ -37,7 +37,8 @@ static uint8_t counter = 0;
 #define CALIB_PAUSE   (2 * FSM_CLK)     // wait for 2 seconds of runs through the state machine
 #define STANDBY_PAUSE (5 * FSM_CLK)     // pause for 5 seconds of runs through the state machine
 #else
-#define CALIB_PAUSE (10.5 * FSM_CLK)    // wait for 10.5 seconds of runs through the state machine
+#define CALIB_PAUSE (0.25 * FSM_CLK)    // PDH: ChuckIt testing....assumes DCM_CALIB_PAUSE set to 0.125 seconds
+//#define CALIB_PAUSE (10.5 * FSM_CLK)    // wait for 10.5 seconds of runs through the state machine
 #define STANDBY_PAUSE (48 * FSM_CLK)    // pause for 48 seconds of runs through the state machine
                                         // This used to be 24 seconds, but that was not long enough
                                         // Standby pause was raised from 24 seconds to 48 seconds by BillP
@@ -241,6 +242,7 @@ static void ent_stabilizedS(void)
 	state_flags._.pitch_feedback = 1;
 	state_flags._.altitude_hold_throttle = (settings._.AltitudeholdStabilized == AH_FULL);
 	state_flags._.altitude_hold_pitch = (settings._.AltitudeholdStabilized == AH_FULL || settings._.AltitudeholdStabilized == AH_PITCH_ONLY);
+    dcm_flags._.dead_reckon_enable = 1;
 	waggle = 0;
 	led_on(LED_RED);
 	stateS = &stabilizedS;
@@ -347,7 +349,7 @@ static void calibrateS(void)
 		calib_timer--;
 		DPRINT("calib_timer %u  \r", calib_timer);
 		if (calib_timer <= 0)
-			ent_acquiringS();
+			ent_stabilizedS();
 	}
 	else
 	{

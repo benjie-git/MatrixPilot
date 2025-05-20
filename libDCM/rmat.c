@@ -21,6 +21,7 @@
 
 #include "libDCM.h"
 #include "mathlibNAV.h"
+#include "mathlib.h"
 #include "deadReckoning.h"
 #include "gpsParseCommon.h"
 #include "../libUDB/heartbeat.h"
@@ -55,7 +56,7 @@ static fractional spin_axis[] = { 0, 0, RMAX };
 #if (BOARD_TYPE == AUAV3_BOARD || BOARD_TYPE == UDB5_BOARD || BOARD_TYPE == PX4_BOARD)
 // modified gains for MPU6000
 #define KPROLLPITCH (ACCEL_RANGE * 1280/3)
-#define KIROLLPITCH (ACCEL_RANGE * 3400 / HEARTBEAT_HZ)
+#define KIROLLPITCH ((ACCEL_RANGE / 2 ) * 3400 / (HEARTBEAT_HZ / 2)) // divide by 2 prevents compiler warning on integer overflow for 16g setting
 
 #elif (BOARD_TYPE == UDB4_BOARD)
 // Paul's gains for 6G accelerometers
@@ -116,15 +117,18 @@ fractional omegaAccum[] = { 0, 0, 0 };
 
 // gplane[] is a vector representing (gravity - acceleration) in the plane's coordinate system. 
 // gravity_vector_plane[], is gravity as measured in the plane's coordinate system
+// accel_vector_plane[], is acceleration without gravity in the plane's coordinate system.]
 #ifdef INITIALIZE_VERTICAL // VTOL vertical initialization
 static fractional gplane[] = { 0, -GRAVITY, 0 };
 static fractional gravit_vector_plane[] = { 0, -GRAVITY, 0 };
 int16_t aero_force[] = { 0 , GRAVITY , 0 };
 #else  // horizontal initialization
-static fractional gplane[] = { 0, 0, GRAVITY };
+fractional gplane[] = { 0, 0, GRAVITY };
 static fractional gravity_vector_plane[] = { 0, 0, GRAVITY };
 int16_t aero_force[] = { 0 , 0 , -GRAVITY };
 #endif
+fractional accel_vector_plane[] = { 0, 0, 0 };
+uint16_t return_accel_vector_plane_xy(void);
 
 
 // horizontal velocity over ground, as measured by GPS (Vz = 0)
@@ -143,6 +147,17 @@ fractional dirOverGndHrmat[] = { 0, RMAX, 0 };
 static fractional errorRP[] = { 0, 0, 0 };
 static fractional errorYawground[] = { 0, 0, 0 };
 static fractional errorYawplane[]  = { 0, 0, 0 };
+fractional rmat_transpose[]    = { RMAX, 0, 0, 0, RMAX, 0, 0, 0, RMAX };
+
+uint16_t return_accel_vector_plane_xy(void)
+{
+    vect2_16t accel_vector_in_xy;
+    accel_vector_in_xy.x = accel_vector_plane[0];
+    accel_vector_in_xy.y = accel_vector_plane[1];
+    return(vect2_16_mag(&accel_vector_in_xy));    
+    //return accel_vector_plane[1]; // Not working well. New rmat init creating an issue ?
+}
+
 
 void yaw_drift_reset(void)
 {
@@ -189,7 +204,7 @@ static inline void read_gyros(void)
 	}
 }
 
-static inline void read_accel(void)
+inline void read_accel(void)
 {
 #if (HILSIM == 1)
 	HILSIM_set_gplane(gplane);
@@ -236,6 +251,10 @@ static inline void read_accel(void)
 //	accelEarthFiltered[0].WW += ((((int32_t)accelEarth[0])<<16) - accelEarthFiltered[0].WW)>>5;
 //	accelEarthFiltered[1].WW += ((((int32_t)accelEarth[1])<<16) - accelEarthFiltered[1].WW)>>5;
 //	accelEarthFiltered[2].WW += ((((int32_t)accelEarth[2])<<16) - accelEarthFiltered[2].WW)>>5;
+    
+    // Rotate accelEarth[] back into the plane reference, for use with ChuckIt plane ]
+    MatrixTranspose(3, 3, rmat_transpose, rmat);
+    MatrixMultiply(3, 3, 1, accel_vector_plane, rmat_transpose, accelEarth);
 }
 
 void udb_callback_read_sensors(void)
@@ -356,7 +375,6 @@ static void adj_accel(int16_t angleOfAttack)
 	// compute centrifugal and forward acceleration compensation
 	gravity_vector_plane[0] = gravity_vector_plane[0] + omegaSOG(omegaAccum[1], air_speed_z);
 	gravity_vector_plane[1] = gravity_vector_plane[1] - omegaSOG(omegaAccum[0], air_speed_z) + ((uint16_t)(ACCELSCALE)) * forward_acceleration;
-
 }
 
 // The update algorithm!!
