@@ -217,14 +217,14 @@
 // NUM_INPUTS:
 // If using PWM inputs (parallel Rx connections), set to the number of cables connected, 1-8
 // If using PPM inputs (serial Rx connection), set to the number of Rx channels, up to PPM_NUMBER_OF_CHANNELS
-// If using LRS library (integrated SPI tranceiver), set to the number of Rx channels, up to 16
+// If using LRS library (integrated SPI transceiver), set to the number of Rx channels, up to 16
 #define NUM_INPUTS                          8
 
 // Channel numbers for each input.
 // Use as is, or edit to match your setup.
 //   - If you're set up to use Rudder Navigation (like MatrixNav), then you may want to swap
 //     the aileron and rudder channels so that rudder is CHANNEL_1, and aileron is 5.
-#define THROTTLE_INPUT_CHANNEL              CHANNEL_4
+#define THROTTLE_INPUT_CHANNEL              CHANNEL_UNUSED
 #define AILERON_INPUT_CHANNEL               CHANNEL_2
 #define ELEVATOR_INPUT_CHANNEL              CHANNEL_3
 #define RUDDER_INPUT_CHANNEL                CHANNEL_UNUSED
@@ -238,7 +238,7 @@
 #define OSD_MODE_SWITCH_INPUT_CHANNEL       CHANNEL_UNUSED
 #define RSSI_INPUT_CHANNEL                  CHANNEL_8
 #define MODE_INVERTED_CHANNEL               CHANNEL_UNUSED
-#define PASSTHROUGH_A_INPUT_CHANNEL         CHANNEL_6
+#define PASSTHROUGH_A_INPUT_CHANNEL         CHANNEL_6       // Switch to Reset glider program
 #define PASSTHROUGH_B_INPUT_CHANNEL         CHANNEL_UNUSED
 #define PASSTHROUGH_C_INPUT_CHANNEL         CHANNEL_UNUSED
 #define PASSTHROUGH_D_INPUT_CHANNEL         CHANNEL_UNUSED
@@ -296,10 +296,10 @@
 // Servo Reversing Configuration
 // For any of these that are set to 1, that servo will be sent reversed controls.
 // Note that your servo reversing settings here should match what you set on your transmitter.
-#define AILERON_CHANNEL_REVERSED            0
+#define AILERON_CHANNEL_REVERSED            1
 #define ELEVATOR_CHANNEL_REVERSED           0
 #define RUDDER_CHANNEL_REVERSED             0
-#define AILERON_SECONDARY_CHANNEL_REVERSED  0
+#define AILERON_SECONDARY_CHANNEL_REVERSED  1
 #define THROTTLE_CHANNEL_REVERSED           0
 #define CAMERA_PITCH_CHANNEL_REVERSED       0
 #define CAMERA_YAW_CHANNEL_REVERSED         0
@@ -340,7 +340,7 @@
 //
 // FAILSAFE_INPUT_MIN and _MAX define the range within which we consider the radio on.
 // Normal signals should fall within about 2000 - 4000.
-#define FAILSAFE_INPUT_CHANNEL              THROTTLE_INPUT_CHANNEL
+#define FAILSAFE_INPUT_CHANNEL              BRAKE_INPUT_CHANNEL
 #define FAILSAFE_INPUT_MIN                  1500
 #define FAILSAFE_INPUT_MAX                  4500
 
@@ -528,17 +528,17 @@
 // use it only if there is no rudder.
 // YAWKD_AILERON is the derivative feedback gain for ailerons in response to yaw rotation.
 // use it only if there is no rudder.
-#define ROLLKP                              0.13
+#define ROLLKP                              0.10
 #define ROLLKD                              0.01
 #define YAWKP_AILERON                       0.00
-#define YAWKD_AILERON                       0.05
+#define YAWKD_AILERON                       0.02
 
 // Elevator/Pitch Control Gains
 // PITCHGAIN is the pitch stabilization gain, typically around 0.125
 // PITCHKD feedback gain for pitch damping, around 0.0625
 // ELEVATOR_BOOST is the additional gain multiplier for the manually commanded elevator deflection
-#define PITCHGAIN                           0.35
-#define PITCHKD                             0.04
+#define PITCHGAIN                           0.25
+#define PITCHKD                             0.01
 #define ELEVATOR_BOOST                      0.40
 
 // Parameters below are used in the computation of angle of attack and pitch trim.
@@ -567,16 +567,14 @@
 // Uncomment the line below to activate the CUSTOM_OFFSETS feature in MatrixPilot.
 
 #define CUSTOM_OFFSETS
-// 396	-92	-908	-202	-7	-102
-// 99	-23	-227	-51 	-2	-26 // >>2 to adjust for higher max rates
-// 101	73	-40	-37	-39	-19
+// 18	-199	-23	-23	2	-4
 
-#define XACCEL_OFFSET  (101)
-#define YACCEL_OFFSET  (73)
-#define ZACCEL_OFFSET  (-40)
-#define XRATE_OFFSET   (-37)
-#define YRATE_OFFSET   (-39)
-#define ZRATE_OFFSET   (-19)
+#define XACCEL_OFFSET  (18)
+#define YACCEL_OFFSET  (-199)
+#define ZACCEL_OFFSET  (-23)
+#define XRATE_OFFSET   (-23)
+#define YRATE_OFFSET   (2)
+#define ZRATE_OFFSET   (-4)
 
 // Rudder/Yaw Control Gains
 // YAWKP_RUDDER is the proportional feedback gain for rudder control of yaw orientation.

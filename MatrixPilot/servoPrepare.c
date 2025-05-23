@@ -128,7 +128,7 @@ static void flight_controller(void)
 
 static void manualPassthrough(void)
 {
-	roll_control = pitch_control = yaw_control = throttle_control = 0;
+	roll_control = pitch_control = yaw_control = throttle_control = glider_roll_control = glider_pitch_control = 0;
 	servoMix();
 }
 

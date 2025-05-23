@@ -9,6 +9,7 @@
 /MatrixPilot/MatrixPilot-udb5.X/dist/default/
 /MatrixPilot/MatrixPilot-udb5.X/nbproject/Makefile*
 /MatrixPilot/MatrixPilot-udb5.X/nbproject/Package*
+/MatrixPilot/MatrixPilot-udb5.X/.generated_files/
 
 /MatrixPilot/MatrixPilot-udb4.X/nbproject/private/
 /MatrixPilot/MatrixPilot-udb4.X/build/default/
@@ -27,6 +28,7 @@
 /RollPitchYaw/RollPitchYaw-udb5.X/dist/default/
 /RollPitchYaw/RollPitchYaw-udb5.X/nbproject/Makefile*
 /RollPitchYaw/RollPitchYaw-udb5.X/nbproject/Package*
+/RollPitchYaw/RollPitchYaw-udb5.X/.generated_files/
 
 /RollPitchYaw/RollPitchYaw-udb4.X/nbproject/private/
 /RollPitchYaw/RollPitchYaw-udb4.X/build/default/
@@ -71,3 +73,7 @@ MatrixPilot.includes
 
 _build
 
+/MatrixPilot/MatrixPilot-udb5.X/build/
+/MatrixPilot/MatrixPilot-udb5.X/dist/
+/RollPitchYaw/RollPitchYaw-udb5.X/build/
+/RollPitchYaw/RollPitchYaw-udb5.X/dist/

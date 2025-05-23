@@ -39,7 +39,7 @@ enum PLANE_FLIGHT_MODE
 	PLANE_LANDED
 };
 
-static int16_t flight_mode = PLANE_INIT;
+static int16_t flight_mode = PLANE_IN_FLIGHT;
 static int16_t state_counter = 0;
 static int16_t home_saved = false;
 static int32_t last_lat = 0;
@@ -194,7 +194,7 @@ static struct gliderInstructionDef gliderFlightPlanRight[] =
 static struct gliderInstructionDef *gliderFlightPlan = NULL;
 
 
-static int16_t step_number = 0;
+static int16_t step_number = 99;  // Boot up at the end of the program, so you need to Reset to actually start a program
 static int16_t step_counter = 0;
 static int16_t num_steps = 0;
 

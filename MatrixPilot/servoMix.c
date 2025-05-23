@@ -160,7 +160,19 @@ void servoMix(void)
 	// It does not matter whether the radio is on or not
 	if (state_flags._.pitch_feedback)
 	{
-		pwManual[AILERON_INPUT_CHANNEL] = udb_pwTrim[AILERON_INPUT_CHANNEL] ; // in fly by wire or navigate mode, manual input is accounted for in the turn control
+#define AIL_FBW_ZONE 600
+        if (pwManual[AILERON_INPUT_CHANNEL] > udb_pwTrim[AILERON_INPUT_CHANNEL]-AIL_FBW_ZONE && pwManual[AILERON_INPUT_CHANNEL] < udb_pwTrim[AILERON_INPUT_CHANNEL]+AIL_FBW_ZONE) {
+    		// in fly by wire or navigate mode, manual input is accounted for in the turn control
+            pwManual[AILERON_INPUT_CHANNEL] = udb_pwTrim[AILERON_INPUT_CHANNEL] ;
+        }
+        else if (pwManual[AILERON_INPUT_CHANNEL] <= udb_pwTrim[AILERON_INPUT_CHANNEL]-AIL_FBW_ZONE) {
+            // Boost ailerons on top of FBW, in the bottom 1/4 of the input range
+    		pwManual[AILERON_INPUT_CHANNEL] = udb_pwTrim[AILERON_INPUT_CHANNEL] + (pwManual[AILERON_INPUT_CHANNEL] - udb_pwTrim[AILERON_INPUT_CHANNEL] + AIL_FBW_ZONE)*2  ;
+        }
+        else {
+            // Boost ailerons on top of FBW, in the top 1/4 of the input range
+    		pwManual[AILERON_INPUT_CHANNEL] = udb_pwTrim[AILERON_INPUT_CHANNEL] + (pwManual[AILERON_INPUT_CHANNEL] - udb_pwTrim[AILERON_INPUT_CHANNEL] - AIL_FBW_ZONE)*2  ;
+        }
 		pwManual[ELEVATOR_INPUT_CHANNEL] += ((pwManual[ELEVATOR_INPUT_CHANNEL] - udb_pwTrim[ELEVATOR_INPUT_CHANNEL]) * elevatorbgain) >> 3;
 		pwManual[RUDDER_INPUT_CHANNEL] += ((pwManual[RUDDER_INPUT_CHANNEL] - udb_pwTrim[RUDDER_INPUT_CHANNEL]) * rudderbgain) >> 3;
 	}
